@@ -109,7 +109,7 @@ And there you go!... you just have synchronized data between 2 servers (well, 2 
 
 ## End
 
-I hope this code can help you in any way. An remember: What you code matters!
+I hope this code can help you in any way. And remember: What you code matters!
 
 Enjoy!
 _Jose-Tomas Salvador_
