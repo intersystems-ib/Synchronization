@@ -23,6 +23,7 @@ ClassMethod newOrder(pItem as %Integer, pEmployee as %Integer, pCustomer as %Int
 	quit tResp
 }
 
+/// Modifies and order. References to other objects will come with their IDs. We're assuming that data is valid, that means, those referenced objects exist.
 ClassMethod changeOrder(pOrderId as %Integer, pItem as %Integer, pEmployee as %Integer, pCustomer as %Integer, pDateOrder as %TimeStamp, pPrice as %Decimal, pQuantity as %Decimal) as %DynamicObject
 {
 	#dim tSC as %Status=0
@@ -32,12 +33,12 @@ ClassMethod changeOrder(pOrderId as %Integer, pItem as %Integer, pEmployee as %I
 	
 	if $IsObject(tOrd)
 	{
-		do tOrd.itemSetObjectId(pItem)
-		do tOrd.employeeSetObjectId(pEmployee)
-		do tOrd.customerSetObjectId(pCustomer)
-		set tOrd.dateOrder = pDateOrder
-		set tOrd.price = pPrice
-		set tOrd.quantity = pQuantity
+		do:pItem>0 tOrd.itemSetObjectId(pItem)
+		do:pEmployee>0 tOrd.employeeSetObjectId(pEmployee)
+		do:pCustomer>0 tOrd.customerSetObjectId(pCustomer)
+		set:pDateOrder'="" tOrd.dateOrder = pDateOrder
+		set:pPrice'<0 tOrd.price = pPrice
+		set:pQuantity'<0 tOrd.quantity = pQuantity
 		
 		set tSC = tOrd.%Save()		
 		

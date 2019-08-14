@@ -2,6 +2,7 @@
 Class SampleApps.Synch.Data.Order Extends (%Persistent,%Populate,%JSON.Adaptor)
 {
 // We don't want to force other classes reference to use %JSON.Adaptor. Then we decide export the GUID of referenced objects (by default it will include the JSON of object referenced)
+// ID doesn't uniquely identify an object when there are 2 DBs involved. GUID does.
 Parameter %JSONREFERENCE As STRING [ Constraint = "OBJECT,ID,OID,GUID", Flags = ENUM ] = "GUID";
 
 ///We'll keep track of this class for synchronization (assuming that in off-line mode is not allowed by the app to modify master classes
@@ -41,8 +42,9 @@ ClassMethod %ResolveConcurrencyConflict(oid As %ObjectIdentity, objSS As %SYNC.S
 	{
 	 	set ^XXTRACE("SYNCH","conflicts")=0
 	 	set tTimeStamp = $zdt($h,3)
-	 	set tCounter = $I(^XXTRACE("SYNCH","conflicts"))
-		set ^XXTRACE("SYNCH",tTimeStamp,tCounter,"Object conflict",oid)=""
+	 	set ^XXTRACE("SYNCH",objSS.sId)=tTimeStamp
+	 	set tCounter = $I(^XXTRACE("SYNCH",objSS.sId,"conflicts"))
+		set ^XXTRACE("SYNCH",objSS.sId,"Object conflict",tCounter,oid)=""
 		
 		// Gets the name of NS we consider MASTER repository  (this should be in some kind of configuration area... also it would be better SystemGUID+NS)
 		set tMASTERns = $get(^XXTRACE("SYNCH","NS"),"MASTER")
@@ -53,14 +55,14 @@ ClassMethod %ResolveConcurrencyConflict(oid As %ObjectIdentity, objSS As %SYNC.S
 		while tRS.%Next(.tSC)
 		{
 			do tObjectData.%Set(tRS.GetData(1),tRS.GetData(2))
-			//set ^XXTRACE(tTimeStamp,tCounter,"Object conflict","getting data")=""
+			//set ^XXTRACE(tTimeStamp,"Object conflict",tCounter,"getting data")=""
 		} 
 		
-		set ^XXTRACE(tTimeStamp,tCounter,"Object conflict","src data")=tObjectData.%ToJSON()	
+		set ^XXTRACE(tTimeStamp,"Object conflict",tCounter,"src data")=tObjectData.%ToJSON()	
 		
 		// We can preserve the src and target data in a SynchConflict class.
 		set tConflict = ##class(SampleApps.Synch.Data.SynchConflict).%New()
-		set tConflict.chosen = "tgt"  // By default let's assume we'll keep the local object version
+		set tConflict.chosen = "local"  // By default let's assume we'll keep the local object version
 		set tConflict.syncID = objSS.sId
 		set tConflict.syncSRC = objSS.SyncSystem
 		//set tConflict.srcObject = tObjectData
@@ -75,7 +77,7 @@ ClassMethod %ResolveConcurrencyConflict(oid As %ObjectIdentity, objSS As %SYNC.S
 		if tMASTERns '= tObjectData.%Get("%%ONSID")   // %ONSID stores the src namespace
 		{
 			set bAcceptYours = 1
-			set tConflict.chosen = "src"	// we will store the remote object version
+			set tConflict.chosen = "remote"	// we will store the remote object version
 		}
 		
 		set tSC = tConflict.%Save()
@@ -83,7 +85,7 @@ ClassMethod %ResolveConcurrencyConflict(oid As %ObjectIdentity, objSS As %SYNC.S
 	catch e
 	{
 		set tSC = e.AsStatus()
-		set ^XXTRACE("error")=tSC
+		set ^XXTRACE("SYNCH",objSS.sId,"error")=tSC
 	}
 	
 	quit tSC

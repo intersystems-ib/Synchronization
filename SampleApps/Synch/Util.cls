@@ -9,7 +9,7 @@ ClassMethod Reset(pMasterNS as %String="MASTER") as %Status
 	
 	do ##class(SampleApps.Synch.Data.Order).%KillExtent()
 	do ##class(SampleApps.Synch.Data.Customer).%KillExtent()
-	do ##class(SampleAppps.Synch.Data.Employee).%KillExtent()
+	do ##class(SampleApps.Synch.Data.Employee).%KillExtent()
 	do ##class(SampleApps.Synch.Data.Item).%KillExtent()
 	
 	do ##class(%ExtentMgr.GUID).%KillExtent()
@@ -172,7 +172,7 @@ ClassMethod Synchronize(pSyncID as %Integer,pSrcNS as %String="", pDir as %Strin
 			set pFile = "syncFrom"_pSrcNS_"-"_pSyncID_".gbl"
 		}
 		
-		set tFile = pDir_"\"_pFile
+		set tFile = pDir_"/"_pFile
 		
 		write:pVerbose !,"Synchronizing data from :"_tFile
 		

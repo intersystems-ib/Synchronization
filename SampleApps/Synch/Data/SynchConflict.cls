@@ -2,13 +2,13 @@ Class SampleApps.Synch.Data.SynchConflict Extends (%Persistent,%JSON.Adaptor)
 {
 	Property syncSRC as %String;
 	Property syncID as %Integer (MINVAL=0);
-	//Property srcObject as %DynamicObject; // There is a reported bug in %JSON.Adaptor dealing with properties of type %DynamicObject
+	//Property srcObject as %DynamicObject; // There is a known limitation as of 2019.2 in %JSON.Adaptor dealing with properties of type %DynamicObject
 	/// To store srsObject serialized in string format
 	Property srcObjectSTR as %String (MAXLEN="");
-	//Property tgtObject as %DynamicObject; // There is a reported bug in %JSON.Adaptor dealing with properties of type %DynamicObject
+	//Property tgtObject as %DynamicObject; // There is a known limitation as of 2019.2 in %JSON.Adaptor dealing with properties of type %DynamicObject
 	/// To store tgtObject serialized in string format
 	Property tgtObjectSTR as %String (MAXLEN="");
-	Property chosen as %String (VALUELIST=",src,tgt");
+	Property chosen as %String (VALUELIST=",remote,local");
 Storage Default
 {
 <Data name="SynchConflictDefaultData">

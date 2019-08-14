@@ -18,14 +18,17 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 <Route Url="/order" Method="PUT" Call="UpdateOrder"/>
 <Route Url="/order/:orderID" Method="DELETE" Call="DeleteOrder"/>
 <Route Url="/randomorder" Method="POST" Call="CreateRandomOrder"/>
-<Route Url="/echo" Method="POST" Call="EchoPost"/>
-<Route Url="/echo" Method="GET" Call="EchoGet"/>
-<Route Url="/echo" Method="PUT" Call="EchoPut"/>
-<Route Url="/echo" Method="DELETE" Call="EchoDelete"/>
+<!-- Admin services to prepare SynchSet, Synchronize and query conflicts -->
 <Route Url="/admin/prepsynch" Method="POST" Call="PrepSynch"/>
 <Route Url="/admin/synchronize" Method="POST" Call="Synchronize"/>
 <Route Url="/admin/conflicts/:topMax" Method="GET" Call="ListSynchConflicts"/>
 <Route Url="/admin/conflicts" Method="GET" Call="ListSynchConflicts"/>
+<!-- Echo services for test -->
+<Route Url="/echo" Method="POST" Call="EchoPost"/>
+<Route Url="/echo" Method="GET" Call="EchoGet"/>
+<Route Url="/echo" Method="PUT" Call="EchoPut"/>
+<Route Url="/echo" Method="DELETE" Call="EchoDelete"/>
+<Route Url="/admin/echo" Method="POST" Call="EchoPost"/>
 </Routes>
 }
 
@@ -55,8 +58,8 @@ ClassMethod CreateRandomOrder() as %Status
 ///			"GUID":				<target system GUID - the GUID of the target instance>,
 ///			"excludeNS":		<remote namespace - transactions associated to GUID+excludeNS will not be included in the file>
 ///	 }
-///	Sample for tests - To generate synch file from our TEST namespace to synchronize afterwards in  TESTREMOTE
-///		{"syncID":1000,"dir":"c:/Temp","excludeNS":"TESTREMOTE"}
+///	Sample for tests - To generate synch file from our MASTER namespace to synchronize afterwards in  CLIENT
+///		{"syncID":1000,"dir":"c:/Temp","excludeNS":"CLIENT"}
 ClassMethod PrepSynch() as %Status
 {
 	#dim tSC as %Status=$$$OK
@@ -67,7 +70,7 @@ ClassMethod PrepSynch() as %Status
 	try
 	{
 		set tJSON = tJSON.%FromJSON(%request.Content)
-		//do tJSON.%ToJSON()
+		do tJSON.%ToJSON()
 		set tSC = ##class(SampleApps.Synch.Util).PrepareSync(tJSON.%Get("syncID",0),tJSON.%Get("updateSyncTime",1),tJSON.%Get("dir","."),tJSON.%Get("file",""),tJSON.%Get("firstTrans",0),tJSON.%Get("lastTrans",""),tJSON.%Get("GUID",""),tJSON.%Get("excludeNS",""),.tResult)
 		
 		do tResult.%ToJSON()
@@ -87,8 +90,8 @@ ClassMethod PrepSynch() as %Status
 ///		"dir":			<string - dir path where the file is stored ("." by default)
 ///		"file":			<filename - file that stores the data to be synchronized>
 /// }
-/// Sample for tests - Synchronizing in TESTREMOTE namespace with a file coming from TEST namespace
-///		{"syncID":1000,"dir":"c:/Temp","srcNS":"TEST"}
+/// Sample for tests - Synchronizing in CLIENT namespace with a file coming from MASTER namespace
+///		{"syncID":1000,"dir":"c:/Temp","srcNS":"MASTER"}
 ClassMethod Synchronize() as %Status
 {
 	#dim tSC as %Status=$$$OK
@@ -103,6 +106,56 @@ ClassMethod Synchronize() as %Status
 		set tSC = ##class(SampleApps.Synch.Util).Synchronize(tJSON.%Get("syncID",0),tJSON.%Get("srcNS",""),tJSON.%Get("dir","."),tJSON.%Get("file",""),.tResult)
 		
 		do tResult.%ToJSON()
+	}
+	catch e
+	{
+		set tSC = e.AsStatus()
+	}
+	
+	quit tSC
+}
+
+/// Will receive data in body of request, in JSON format:
+/// Example:  {"orderNum":1004,"employee":1,"customer":5,"dateOrder":"2000-07-11 06:14:11","item":23,"quantity":401,"price":446}
+ClassMethod UpdateOrder() as %Status
+{
+	#dim tSC as %Status=$$$OK
+	#dim e as %Exception.AbstractException
+	#dim tJSON as %DynamicObject={}
+	#dim tResult as %DynamicObject={}
+	
+	try
+	{
+		set tJSON = tJSON.%FromJSON(%request.Content)
+		
+		// In case of no info for some properties that would mean that those properties shouldn't be modified... to state that we assign a non-valid value with passed to changeOrder method.
+		// There we will deal with that.
+		set tResult = ##class(SampleApps.Synch.API.common).changeOrder(tJSON.%Get("orderNum",0),tJSON.%Get("item",-1),tJSON.%Get("employee",-1),tJSON.%Get("customer",-1),tJSON.%Get("dateOrder",""),tJSON.%Get("price",-1),tJSON.%Get("quantity",-1))
+
+    	Set %response.ContentType="application/json"
+    	do tResult.%ToJSON()
+	}
+	catch e
+	{
+		set tSC = e.AsStatus()
+	}
+	quit tSC
+}
+
+ClassMethod GetOrder(pID as %Integer) as %Status
+{
+	#dim tSC as %Status=$$$OK
+	#dim e as %Exception.AbstractException
+	
+	try
+	{
+	
+		set tObj = ##class(SampleApps.Synch.Data.Order).%OpenId(pID,,.tSC)
+		if $IsObject(tObj) 
+		{
+			Set %response.ContentType="application/json"
+			do tObj.%JSONExport()
+		}
 	}
 	catch e
 	{
@@ -140,34 +193,8 @@ ClassMethod NewOrder() as %Status
     quit tSC
 }
 
-ClassMethod UpdateOrder() as %Status
-{
-	#dim tSC As %Status = $$$OK
-    #dim e As %Exception.AbstractException
-    
-    #dim %request as %CSP.Request
-    #dim tJSON as %DynamicObject={}
-    #dim tResult as %DynamicObject={}
-    
-    Try 
-    {    
-    	// we should receive a JSON in the request body
-    	set tJSON = tJSON.%FromJSON(%request.Content)
-    	
-    	set tResult = ##class(SampleApps.Synch.API.common).changeOrder(tJSON.id,tJSON.item,tJSON.employee,tJSON.customer,tJSON.dateOrder,tJSON.price,tJSON.quantity)
-    	
-    	Set %response.ContentType="application/json"
-    	do tResult.%ToJSON()
-    }
-    catch (e)
-    {
-    	set tSC = e.AsStatus()
-    }
-    
-    quit tSC	
-}
-
-ClassMethod DeleteOrder(pOrderId) as %Status
+/// Deleter order with ID = pOrdeId
+ClassMethod DeleteOrder(pOrderId as %Integer) as %Status
 {
 	#dim tSC As %Status = $$$OK
     #dim e As %Exception.AbstractException
