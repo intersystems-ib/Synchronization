@@ -11,7 +11,7 @@ XData SynchManifest [ XMLNamespace = INSTALLER ]
 	<Default Name="ClientAppREST" Value = "/synchclient/rest/v1" />
  	<Default Name="InstallingFromNS" Value="USER"/>
  	<Default Name="SourceCodeFolder" Value="SampleApps"/>
- 	<Default Name="InstallDir" Value="c:/Temp"/>
+ 	<Default Name="InstallDir" Value="/home/irisowner/dev"/>
  	<Default Name="NamespaceClient" Value="CLIENT" />
  	<Default Name="Resource" Value="%DB_DEFAULT"/>
 

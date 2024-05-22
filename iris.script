@@ -1,0 +1,24 @@
+zn "%SYS"
+  
+// Unexpire passwords and set up passwordless mode to simplify dev use.
+do ##class(Security.Users).UnExpireUserPasswords("*")
+zpm "install passwordless"
+
+zn "USER"
+// Create /_vscode web app to support intersystems-community.testingmanager VS Code extension
+zpm "install vscode-per-namespace-settings"
+zpm "install webterminal"
+
+// this should be the place for individual application code.
+do EnableDeepSee^%SYS.cspServer("/csp/user/")
+zpm "list"
+// manual installation	
+do $system.OBJ.Load("/home/irisowner/dev/DockerInstaller.cls","ck")
+set args("InstallingFromNS")="USER"
+set args("NamespaceMaster")="MYMASTERNODE"
+set args("NamespaceClient")="MYCLIENTNODE"
+do ##class(SampleApps.Synch.Config.Installer).setup(.args)	
+write !?5,"ready to use",!	
+		
+halt
+

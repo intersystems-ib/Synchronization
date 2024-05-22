@@ -113,3 +113,36 @@ I hope this code can help you in any way. And remember: What you code matters!
 
 Enjoy!
 _Jose-Tomas Salvador_
+
+## Docker    
+Container build and start runs ALL installation steps.    
+It is immedeatly ready for use as decsribed    
+
+### Prerequisites
+Make sure you have [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and [Docker desktop](https://www.docker.com/products/docker-desktop) installed.
+### Installation
+Clone/git pull the repo into any local directory
+```
+$ git clone https://github.com/rcemper/PR_Synchronization.git
+```
+```
+$ docker compose up -d && docker compose logs -f
+```
+Quick REST access to MASTER:   
+http://localhost:42773/synchmaster/rest/v1/customers   
+
+Quick REST access to CLIENT:    
+http://localhost:42773/synchclient/rest/v1/employees   
+
+
+To open IRIS Terminal do:   
+```
+$ docker-compose exec iris iris session iris 
+USER>
+```
+or using **WebTerminal**     
+http://localhost:42773/terminal/      
+
+To access IRIS System Management Portal   
+http://localhost:42773/csp/sys/UtilHome.csp    
+
